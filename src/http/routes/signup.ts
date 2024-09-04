@@ -11,9 +11,11 @@ import { InvalidCarPlateException } from "../exceptions/invalid-car-plate-except
 
 export async function signup(request: Request, response: Response) {
   const input = request.body;
-  const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
+  const databaseConnection = pgp()(
+    "postgres://postgres:123456@localhost:5432/app"
+  );
   try {
-    const [accountAlreadyExists] = await connection.query(
+    const [accountAlreadyExists] = await databaseConnection.query(
       "SELECT * FROM ccca.account WHERE email = $1",
       [input.email]
     );
@@ -33,7 +35,7 @@ export async function signup(request: Request, response: Response) {
       throw new InvalidCarPlateException(input.carPlate);
     }
     const id = crypto.randomUUID();
-    await connection.query(
+    await databaseConnection.query(
       `INSERT INTO ccca.account (account_id, name, email, cpf, car_plate, is_passenger, is_driver, password) 
        VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
@@ -54,7 +56,7 @@ export async function signup(request: Request, response: Response) {
     }
     return response.status(500).send();
   } finally {
-    await connection.$pool.end();
+    await databaseConnection.$pool.end();
   }
 }
 
