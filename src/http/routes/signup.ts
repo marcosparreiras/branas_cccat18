@@ -13,11 +13,11 @@ export async function signup(request: Request, response: Response) {
   const input = request.body;
   const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
   try {
-    const [accountExists] = await connection.query(
+    const [accountAlreadyExists] = await connection.query(
       "SELECT * FROM ccca.account WHERE email = $1",
       [input.email]
     );
-    if (accountExists) {
+    if (accountAlreadyExists) {
       throw new AccountAlreadyExistsException(input.email);
     }
     if (!validateName(input.name)) {
