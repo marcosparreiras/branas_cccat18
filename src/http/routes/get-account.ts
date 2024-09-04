@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import pgPromise from "pg-promise";
+import { AccountNotFountException } from "../exceptions/account-not-found-exception";
+import { DomainException } from "../exceptions/domain-exception";
 
 export async function getAccount(request: Request, response: Response) {
   const input = request.params;
@@ -30,17 +32,11 @@ export async function getAccount(request: Request, response: Response) {
       password: queryResults[0].password,
     });
   } catch (error: unknown) {
-    if (error instanceof AccountNotFountException) {
-      return response.status(400).json({ message: error.message });
+    if (error instanceof DomainException) {
+      return response.status(error.status).json({ message: error.message });
     }
     return response.status(500).send();
   } finally {
     await databaseConnetion.$pool.end();
-  }
-}
-
-class AccountNotFountException extends Error {
-  constructor(accountId: string) {
-    super(`Account (${accountId}) not found`);
   }
 }

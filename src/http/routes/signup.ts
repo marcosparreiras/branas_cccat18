@@ -2,9 +2,15 @@ import crypto from "crypto";
 import pgp from "pg-promise";
 import { type Request, type Response } from "express";
 import { validateCpf } from "../../utils/validateCpf";
+import { AccountAlreadyExistsException } from "../exceptions/account-already-exists-exception";
+import { DomainException } from "../exceptions/domain-exception";
+import { InvalidNameException } from "../exceptions/invalid-name-exception";
+import { InvalidEmailException } from "../exceptions/invalid-email-exception";
+import { InvalidCpfException } from "../exceptions/invalid-cpf-exception";
+import { InvalidCarPlateException } from "../exceptions/invalid-car-plate-exception";
 
-export async function signup(req: Request, res: Response) {
-  const input = req.body;
+export async function signup(request: Request, response: Response) {
+  const input = request.body;
   const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
   try {
     const [acc] = await connection.query(
@@ -12,21 +18,21 @@ export async function signup(req: Request, res: Response) {
       [input.email]
     );
     if (acc) {
-      return res.status(422).json({ message: "account already exists" });
+      throw new AccountAlreadyExistsException(input.email, 422);
     }
-    if (!input.name.match(/[a-zA-Z] [a-zA-Z]+/)) {
-      return res.status(422).json({ message: "Invalid name" });
+    if (!validateName(input.name)) {
+      throw new InvalidNameException(input.name, 422);
     }
-    if (!input.email.match(/^(.+)@(.+)$/)) {
-      return res.status(422).json({ message: "Invalid email" });
+    if (!validateEmail(input.email)) {
+      throw new InvalidEmailException(input.email, 422);
     }
     if (!validateCpf(input.cpf)) {
-      return res.status(422).json({ message: "Invalid cpf" });
+      throw new InvalidCpfException(input.cpf, 422);
     }
     const id = crypto.randomUUID();
     if (input.isDriver) {
-      if (!input.carPlate.match(/[A-Z]{3}[0-9]{4}/)) {
-        return res.status(422).send({ message: "Invalid car plate" });
+      if (!validateCarPlate(input.carPlate)) {
+        throw new InvalidCarPlateException(input.carPlate, 422);
       }
       await connection.query(
         `INSERT INTO ccca.account(account_id, name, email, cpf, car_plate, is_passenger, is_driver, password) 
@@ -58,16 +64,25 @@ export async function signup(req: Request, res: Response) {
         ]
       );
     }
-
-    const result = {
-      accountId: id,
-    };
-    if (typeof result === "number") {
-      res.status(422).json({ message: result });
-    } else {
-      res.status(201).json(result);
+    return response.status(201).json({ accountId: id });
+  } catch (error: unknown) {
+    if (error instanceof DomainException) {
+      return response.status(error.status).send({ message: error.message });
     }
+    return response.status(500).send();
   } finally {
     await connection.$pool.end();
   }
+}
+
+function validateName(name: string): boolean {
+  return /[a-zA-Z] [a-zA-Z]+/.test(name);
+}
+
+function validateEmail(email: string): boolean {
+  return /^(.+)@(.+)$/.test(email);
+}
+
+function validateCarPlate(carPlate: string): boolean {
+  return /[A-Z]{3}[0-9]{4}/.test(carPlate);
 }
