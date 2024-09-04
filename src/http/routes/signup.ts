@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import pgp from "pg-promise";
 import { type Request, type Response } from "express";
-import { validateCpf } from "./validateCpf";
+import { validateCpf } from "../../utils/validateCpf";
 
 export async function signup(req: Request, res: Response) {
   const input = req.body;
