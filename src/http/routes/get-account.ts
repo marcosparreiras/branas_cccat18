@@ -1,26 +1,19 @@
 import type { Request, Response } from "express";
 import pgPromise from "pg-promise";
 
-class AccountNotFountException extends Error {
-  constructor(accountId: string) {
-    super(`Account not (${accountId}) found`);
-  }
-}
-
 export async function getAccount(request: Request, response: Response) {
   const input = request.params;
-
+  const databaseConnetion = pgPromise()(
+    "postgres://postgres:123456@localhost:5432/app"
+  );
   try {
-    const databaseConnetion = pgPromise()(
-      "postgres://postgres:123456@localhost:5432/app"
-    );
     if (!input.accountId) {
-      throw new Error("");
+      throw new Error();
     }
     const queryResults = await databaseConnetion.query(
       `SELECT account_id, name, email, cpf, car_plate, is_passenger, is_driver, password
-       FROM ccca.account
-       WHERE account_id = $1`,
+      FROM ccca.account
+      WHERE account_id = $1`,
       [input.accountId]
     );
     if (queryResults.length === 0) {
@@ -41,5 +34,13 @@ export async function getAccount(request: Request, response: Response) {
       return response.status(400).json({ message: error.message });
     }
     return response.status(500).send();
+  } finally {
+    await databaseConnetion.$pool.end();
+  }
+}
+
+class AccountNotFountException extends Error {
+  constructor(accountId: string) {
+    super(`Account (${accountId}) not found`);
   }
 }

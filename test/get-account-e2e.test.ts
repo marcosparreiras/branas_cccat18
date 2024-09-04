@@ -15,6 +15,7 @@ describe("GET /account", () => {
 
   afterAll(async () => {
     await databaseConnetion.query("DELETE FROM ccca.account");
+    await databaseConnetion.$pool.end();
   });
 
   it("Should be able to get an existent account", async () => {
@@ -43,7 +44,6 @@ describe("GET /account", () => {
         account.password,
       ]
     );
-
     const httpResponse = await request(app).get(
       `/account/${account.accountId}`
     );

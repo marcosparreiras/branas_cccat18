@@ -15,6 +15,7 @@ describe("POST /signup", () => {
 
   afterAll(async () => {
     await databaseConnetion.query("DELETE FROM ccca.account");
+    await databaseConnetion.$pool.end();
   });
 
   it("Should be able to create an passenger", async () => {
@@ -26,12 +27,22 @@ describe("POST /signup", () => {
       isPassenger: true,
       isDriver: false,
     };
-    const httpResponse = await request(app).post("/signup").send(requestBody);
-    expect(httpResponse.status).toEqual(201);
-    expect(httpResponse.body).toEqual(
+    const signupHttpResponse = await request(app)
+      .post("/signup")
+      .send(requestBody);
+    expect(signupHttpResponse.status).toEqual(201);
+    expect(signupHttpResponse.body).toEqual(
       expect.objectContaining({
         accountId: expect.any(String),
       })
+    );
+    const accountId = signupHttpResponse.body.accountId;
+    const getAccountHttpResponse = await request(app).get(
+      `/account/${accountId}`
+    );
+    expect(getAccountHttpResponse.status).toEqual(200);
+    expect(getAccountHttpResponse.body).toEqual(
+      expect.objectContaining(requestBody)
     );
   });
 
@@ -45,12 +56,22 @@ describe("POST /signup", () => {
       isPassenger: false,
       isDriver: true,
     };
-    const httpResponse = await request(app).post("/signup").send(requestBody);
-    expect(httpResponse.status).toEqual(201);
-    expect(httpResponse.body).toEqual(
+    const signupHttpResponse = await request(app)
+      .post("/signup")
+      .send(requestBody);
+    expect(signupHttpResponse.status).toEqual(201);
+    expect(signupHttpResponse.body).toEqual(
       expect.objectContaining({
         accountId: expect.any(String),
       })
+    );
+    const accountId = signupHttpResponse.body.accountId;
+    const getAccountHttpResponse = await request(app).get(
+      `/account/${accountId}`
+    );
+    expect(getAccountHttpResponse.status).toEqual(200);
+    expect(getAccountHttpResponse.body).toEqual(
+      expect.objectContaining(requestBody)
     );
   });
 
