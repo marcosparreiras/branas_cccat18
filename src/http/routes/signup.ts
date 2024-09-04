@@ -18,56 +18,39 @@ export async function signup(request: Request, response: Response) {
       [input.email]
     );
     if (acc) {
-      throw new AccountAlreadyExistsException(input.email, 422);
+      throw new AccountAlreadyExistsException(input.email);
     }
     if (!validateName(input.name)) {
-      throw new InvalidNameException(input.name, 422);
+      throw new InvalidNameException(input.name);
     }
     if (!validateEmail(input.email)) {
-      throw new InvalidEmailException(input.email, 422);
+      throw new InvalidEmailException(input.email);
     }
     if (!validateCpf(input.cpf)) {
-      throw new InvalidCpfException(input.cpf, 422);
+      throw new InvalidCpfException(input.cpf);
+    }
+    if (input.isDriver && !validateCarPlate(input.carPlate)) {
+      throw new InvalidCarPlateException(input.carPlate);
     }
     const id = crypto.randomUUID();
-    if (input.isDriver) {
-      if (!validateCarPlate(input.carPlate)) {
-        throw new InvalidCarPlateException(input.carPlate, 422);
-      }
-      await connection.query(
-        `INSERT INTO ccca.account(account_id, name, email, cpf, car_plate, is_passenger, is_driver, password) 
-           VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-          id,
-          input.name,
-          input.email,
-          input.cpf,
-          input.carPlate,
-          !!input.isPassenger,
-          !!input.isDriver,
-          input.password,
-        ]
-      );
-    } else {
-      await connection.query(
-        `INSERT INTO ccca.account (account_id, name, email, cpf, car_plate, is_passenger, is_driver, password) 
-         VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-          id,
-          input.name,
-          input.email,
-          input.cpf,
-          input.carPlate,
-          !!input.isPassenger,
-          !!input.isDriver,
-          input.password,
-        ]
-      );
-    }
+    await connection.query(
+      `INSERT INTO ccca.account (account_id, name, email, cpf, car_plate, is_passenger, is_driver, password) 
+       VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        id,
+        input.name,
+        input.email,
+        input.cpf,
+        input.carPlate,
+        !!input.isPassenger,
+        !!input.isDriver,
+        input.password,
+      ]
+    );
     return response.status(201).json({ accountId: id });
   } catch (error: unknown) {
     if (error instanceof DomainException) {
-      return response.status(error.status).send({ message: error.message });
+      return response.status(422).send({ message: error.message });
     }
     return response.status(500).send();
   } finally {

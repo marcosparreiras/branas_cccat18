@@ -9,9 +9,6 @@ export async function getAccount(request: Request, response: Response) {
     "postgres://postgres:123456@localhost:5432/app"
   );
   try {
-    if (!input.accountId) {
-      throw new Error();
-    }
     const queryResults = await databaseConnetion.query(
       `SELECT account_id, name, email, cpf, car_plate, is_passenger, is_driver, password
       FROM ccca.account
