@@ -1,7 +1,7 @@
-1 - nomes ruins
-2 - código comentado
-3 - linhas em branco
-4 - excesso de condições/complexidade
-5 - tratamento inadequado de erros
-6 - variáveis declaradas longe da utilização
-7 - método longo
+nomes ruins
+código comentado
+linhas em branco
+excesso de condições/complexidade
+tratamento inadequado de erros
+variáveis declaradas longe da utilização
+método longo
