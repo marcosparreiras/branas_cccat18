@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import pgp from "pg-promise";
 import { type Request, type Response } from "express";
 import { validateCpf } from "../../utils/validateCpf";
 import { AccountAlreadyExistsException } from "../exceptions/account-already-exists-exception";
@@ -8,16 +7,18 @@ import { InvalidNameException } from "../exceptions/invalid-name-exception";
 import { InvalidEmailException } from "../exceptions/invalid-email-exception";
 import { InvalidCpfException } from "../exceptions/invalid-cpf-exception";
 import { InvalidCarPlateException } from "../exceptions/invalid-car-plate-exception";
+import { PgConnection, type DbConnection } from "../../adapters/db-connection";
+import { AccountGateway } from "../../adapters/accounts-gateway";
 
 export async function signup(request: Request, response: Response) {
   const input = request.body;
-  const databaseConnection = pgp()(
+  const databaseConnection: DbConnection = new PgConnection(
     "postgres://postgres:123456@localhost:5432/app"
   );
+  const accountGateway = new AccountGateway(databaseConnection);
   try {
-    const [accountAlreadyExists] = await databaseConnection.query(
-      "SELECT * FROM ccca.account WHERE email = $1",
-      [input.email]
+    const accountAlreadyExists = await accountGateway.accountExistWithEmail(
+      input.email
     );
     if (accountAlreadyExists) {
       throw new AccountAlreadyExistsException(input.email);
@@ -35,20 +36,16 @@ export async function signup(request: Request, response: Response) {
       throw new InvalidCarPlateException(input.carPlate);
     }
     const id = crypto.randomUUID();
-    await databaseConnection.query(
-      `INSERT INTO ccca.account (account_id, name, email, cpf, car_plate, is_passenger, is_driver, password) 
-       VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [
-        id,
-        input.name,
-        input.email,
-        input.cpf,
-        input.carPlate,
-        !!input.isPassenger,
-        !!input.isDriver,
-        input.password,
-      ]
-    );
+    await accountGateway.create({
+      id,
+      cpf: input.cpf,
+      carPlate: input.carPlate,
+      email: input.email,
+      isDriver: input.isDriver,
+      isPassenger: input.isPassenger,
+      name: input.name,
+      password: input.password,
+    });
     return response.status(201).json({ accountId: id });
   } catch (error: unknown) {
     if (error instanceof DomainException) {
@@ -56,7 +53,7 @@ export async function signup(request: Request, response: Response) {
     }
     return response.status(500).send();
   } finally {
-    await databaseConnection.$pool.end();
+    await databaseConnection.end();
   }
 }
 
