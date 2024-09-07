@@ -7,7 +7,7 @@ import { CreateAccountUseCase } from "../../domain/use-cases/create-account-use-
 export async function signup(request: Request, response: Response) {
   const input = request.body;
   const databaseConnection = new PgConnection(
-    "postgres://postgres:123456@localhost:5432/app"
+    process.env.DATABASE_URL as string
   );
   const accountRepository = new DbAccountRepository(databaseConnection);
   const createAccountUseCase = new CreateAccountUseCase(accountRepository);

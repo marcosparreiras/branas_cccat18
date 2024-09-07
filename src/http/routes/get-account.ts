@@ -5,9 +5,7 @@ import { DomainException } from "../../domain/exceptions/domain-exception";
 
 export async function getAccount(request: Request, response: Response) {
   const input = request.params;
-  const databaseConnetion = pgPromise()(
-    "postgres://postgres:123456@localhost:5432/app"
-  );
+  const databaseConnetion = pgPromise()(process.env.DATABASE_URL as string);
   try {
     const queryResults = await databaseConnetion.query(
       `SELECT account_id, name, email, cpf, car_plate, is_passenger, is_driver, password

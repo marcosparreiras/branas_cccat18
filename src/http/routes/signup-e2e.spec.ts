@@ -5,9 +5,7 @@ import request from "supertest";
 import pgp from "pg-promise";
 
 describe("POST /signup", () => {
-  const databaseConnetion = pgp()(
-    "postgres://postgres:123456@localhost:5432/app"
-  );
+  const databaseConnetion = pgp()(process.env.DATABASE_URL as string);
 
   beforeEach(async () => {
     await databaseConnetion.query("DELETE FROM ccca.account");
