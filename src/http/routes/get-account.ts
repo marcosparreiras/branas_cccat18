@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import pgPromise from "pg-promise";
-import { AccountNotFountException } from "../exceptions/account-not-found-exception";
-import { DomainException } from "../exceptions/domain-exception";
+import { AccountNotFountException } from "../../domain/exceptions/account-not-found-exception";
+import { DomainException } from "../../domain/exceptions/domain-exception";
 
 export async function getAccount(request: Request, response: Response) {
   const input = request.params;

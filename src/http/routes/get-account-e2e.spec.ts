@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { app } from "../src/http/app";
+import { app } from "../app";
 import request from "supertest";
 
 import pgp from "pg-promise";

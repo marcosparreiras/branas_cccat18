@@ -4,6 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "test:unit": "jest ./src/domain",
+    "test:e2e": "jest ./src/http --runInBand",
     "docker:start": "docker compose up -d",
     "docker:stop": "docker compose stop",
     "docker:clean": "docker compose rm -fsv"

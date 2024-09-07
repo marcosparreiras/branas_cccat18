@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { app } from "../src/http/app";
+import { app } from "../app";
 import request from "supertest";
 
 import pgp from "pg-promise";
@@ -86,7 +86,7 @@ describe("POST /signup", () => {
       isDriver: true,
     };
     const httpResponse = await request(app).post("/signup").send(requestBody);
-    expect(httpResponse.status).toEqual(422);
+    expect(httpResponse.status).toEqual(400);
   });
 
   it("Should not be able to create an account with invalid email", async () => {
@@ -100,7 +100,7 @@ describe("POST /signup", () => {
       isDriver: true,
     };
     const httpResponse = await request(app).post("/signup").send(requestBody);
-    expect(httpResponse.status).toEqual(422);
+    expect(httpResponse.status).toEqual(400);
   });
 
   it("Should not be able to create an account with duplicate email", async () => {
@@ -119,6 +119,6 @@ describe("POST /signup", () => {
       isDriver: true,
     };
     const httpResponse = await request(app).post("/signup").send(requestBody);
-    expect(httpResponse.status).toEqual(422);
+    expect(httpResponse.status).toEqual(400);
   });
 });

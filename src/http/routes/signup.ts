@@ -1,70 +1,33 @@
-import crypto from "crypto";
 import { type Request, type Response } from "express";
-import { validateCpf } from "../../utils/validateCpf";
-import { AccountAlreadyExistsException } from "../exceptions/account-already-exists-exception";
-import { DomainException } from "../exceptions/domain-exception";
-import { InvalidNameException } from "../exceptions/invalid-name-exception";
-import { InvalidEmailException } from "../exceptions/invalid-email-exception";
-import { InvalidCpfException } from "../exceptions/invalid-cpf-exception";
-import { InvalidCarPlateException } from "../exceptions/invalid-car-plate-exception";
-import { PgConnection, type DbConnection } from "../../adapters/db-connection";
-import { AccountGateway } from "../../adapters/accounts-gateway";
+import { DomainException } from "../../domain/exceptions/domain-exception";
+import { PgConnection } from "../../adapters/db-connection";
+import { DbAccountRepository } from "../../adapters/db-accounts-repository";
+import { CreateAccountUseCase } from "../../domain/use-cases/create-account-use-case";
 
 export async function signup(request: Request, response: Response) {
   const input = request.body;
-  const databaseConnection: DbConnection = new PgConnection(
+  const databaseConnection = new PgConnection(
     "postgres://postgres:123456@localhost:5432/app"
   );
-  const accountGateway = new AccountGateway(databaseConnection);
+  const accountRepository = new DbAccountRepository(databaseConnection);
+  const createAccountUseCase = new CreateAccountUseCase(accountRepository);
   try {
-    const accountAlreadyExists = await accountGateway.accountExistWithEmail(
-      input.email
-    );
-    if (accountAlreadyExists) {
-      throw new AccountAlreadyExistsException(input.email);
-    }
-    if (!validateName(input.name)) {
-      throw new InvalidNameException(input.name);
-    }
-    if (!validateEmail(input.email)) {
-      throw new InvalidEmailException(input.email);
-    }
-    if (!validateCpf(input.cpf)) {
-      throw new InvalidCpfException(input.cpf);
-    }
-    if (input.isDriver && !validateCarPlate(input.carPlate)) {
-      throw new InvalidCarPlateException(input.carPlate);
-    }
-    const id = crypto.randomUUID();
-    await accountGateway.create({
-      id,
-      cpf: input.cpf,
-      carPlate: input.carPlate,
+    const { accountId } = await createAccountUseCase.execute({
       email: input.email,
-      isDriver: input.isDriver,
-      isPassenger: input.isPassenger,
+      cpf: input.cpf,
       name: input.name,
       password: input.password,
+      carPlate: input.carPlate,
+      isDriver: input.isDriver,
+      isPassenger: input.isPassenger,
     });
-    return response.status(201).json({ accountId: id });
+    return response.status(201).json({ accountId });
   } catch (error: unknown) {
     if (error instanceof DomainException) {
-      return response.status(422).send({ message: error.message });
+      return response.status(error.status).send({ message: error.message });
     }
     return response.status(500).send();
   } finally {
     await databaseConnection.end();
   }
-}
-
-function validateName(name: string): boolean {
-  return /[a-zA-Z] [a-zA-Z]+/.test(name);
-}
-
-function validateEmail(email: string): boolean {
-  return /^(.+)@(.+)$/.test(email);
-}
-
-function validateCarPlate(carPlate: string): boolean {
-  return /[A-Z]{3}[0-9]{4}/.test(carPlate);
 }
