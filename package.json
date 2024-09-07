@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "test:unit": "jest ./src/domain",
+    "test:integration": "DATABASE_URL=postgres://postgres:123456@localhost:5432/app jest ./src/adapters --runInBand",
     "test:e2e": "DATABASE_URL=postgres://postgres:123456@localhost:5432/app jest ./src/http --runInBand",
     "dev": "DATABASE_URL=postgres://postgres:123456@localhost:5432/app ts-node ./src/http/server.ts",
     "docker:start": "docker compose up -d",
